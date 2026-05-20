@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartCompare – AI-Powered Shopping Advisor</title>
+  <meta name="description" content="Compare products across Amazon, Flipkart, Meesho with AI-driven value scoring, trust analysis, and smart recommendations."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<!-- ═══════════════ TOP BANNER ═══════════════ -->
+<div class="top-banner">
+  🔥 Experience the power of AI-driven product comparison. <a href="#">Learn More</a>
+</div>
+
+<!-- ═══════════════ NAVBAR ═══════════════ -->
+<header class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-text">COMPARE.IO</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#" id="navHome" class="nav-link active">Home</a>
+      <a href="#" id="navCompare" class="nav-link">Compare Hub</a>
+      <a href="admin.html" class="nav-link nav-admin">Admin Portal</a>
+    </nav>
+    <div class="search-wrap" id="searchWrap">
+      <span class="search-icon">🔍</span>
+      <input id="searchInput" type="text" placeholder="Search for products..." autocomplete="off"/>
+      <button id="searchBtn" class="search-btn">Search</button>
+    </div>
+    <div style="display:flex;gap:16px;font-size:20px;cursor:pointer;">
+      <span>🛒</span>
+      <span>👤</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero" id="heroSection">
+  <div class="hero-inner">
+    <div class="hero-content">
+      <h1 class="hero-title">Never overpay<br/>for products<br/>again</h1>
+      <p class="hero-sub">Our AI analyzes thousands of listings across Amazon, Flipkart, and Meesho to highlight the lowest prices and best overall value.</p>
+      
+      <div class="hero-search">
+        <span class="hs-icon">🔍</span>
+        <input id="heroSearch" type="text" placeholder="Try 'iPhone 15', 'Sony TV', 'Nike Shoes'…"/>
+        <button id="heroSearchBtn" class="hs-btn">Compare Now</button>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-num">200+</div>
+          <div class="stat-label">International Brands</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">2,000+</div>
+          <div class="stat-label">High-Quality Products</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">30,000+</div>
+          <div class="stat-label">Happy Customers</div>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1; display:flex; justify-content:center; align-items:center;">
+      <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop" style="width:100%; max-width:500px; border-radius:24px; box-shadow:0 20px 40px rgba(0,0,0,0.1);" alt="Fashion hero"/>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ BRANDS MARQUEE ═══════════════ -->
+<div class="brands-marquee" id="brandsMarquee">
+  <div class="bm-inner">
+    <span>APPLE</span>
+    <span>SAMSUNG</span>
+    <span>SONY</span>
+    <span>NIKE</span>
+    <span>DELL</span>
+    <span>LG</span>
+  </div>
+</div>
+
+<!-- ═══════════════ FILTERS BAR ═══════════════ -->
+<div class="filters-bar hidden" id="filtersBar">
+  <div class="filter-inner">
+    <div class="filter-group">
+      <label>Platform</label>
+      <select id="filterPlatform"><option value="">All Platforms</option><option>Amazon</option><option>Flipkart</option><option>Meesho</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Min Price (₹)</label>
+      <input type="number" id="filterMinPrice" placeholder="0"/>
+    </div>
+    <div class="filter-group">
+      <label>Max Price (₹)</label>
+      <input type="number" id="filterMaxPrice" placeholder="999999"/>
+    </div>
+    <div class="filter-group">
+      <label>Min Rating</label>
+      <select id="filterRating">
+        <option value="0">Any Rating</option>
+        <option value="4">4★ & above</option>
+        <option value="3.5">3.5★ & above</option>
+        <option value="3">3★ & above</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Sort By</label>
+      <select id="sortBy">
+        <option value="relevance">Relevance</option>
+        <option value="price_asc">Price: Low → High</option>
+        <option value="price_desc">Price: High → Low</option>
+        <option value="rating">Highest Rating</option>
+        <option value="value">Best Value Score</option>
+      </select>
+    </div>
+    <button id="applyFilters" class="apply-btn">Apply</button>
+    <button id="clearFilters" class="clear-btn">Clear</button>
+  </div>
+</div>
+
+<!-- ═══════════════ PERSONALIZED BAR ═══════════════ -->
+<div class="personal-bar hidden" id="personalBar">
+  <span class="personal-icon">🧠</span>
+  <span id="personalMsg">Based on your browsing, we recommend:</span>
+</div>
+
+<!-- ═══════════════ RESULTS / HOME ═══════════════ -->
+<main class="main-content" id="mainContent">
+  <!-- Home categories -->
+  <div id="homeView">
+    <section class="section-header"><h2>🔥 Trending Categories</h2></section>
+    <div class="category-grid" id="categoryGrid"></div>
+    <section class="section-header"><h2>⭐ Top Deals Today</h2></section>
+    <div class="products-grid" id="topDealsGrid"></div>
+    <section class="section-header"><h2>💎 Best Value Picks</h2></section>
+    <div class="products-grid" id="bestValueGrid"></div>
+  </div>
+
+  <!-- Search results -->
+  <div id="resultsView" class="hidden">
+    <div class="results-header">
+      <div>
+        <h2 id="resultsTitle">Search Results</h2>
+        <p id="resultsCount" class="results-count"></p>
+      </div>
+    </div>
+    <div class="products-grid" id="resultsGrid"></div>
+    <div id="noResults" class="no-results hidden">
+      <div class="no-results-icon">🔍</div>
+      <h3>No products found</h3>
+      <p>Try different keywords or browse categories below.</p>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════ PRODUCT DETAIL MODAL ═══════════════ -->
+<div class="modal-overlay hidden" id="productModal">
+  <div class="modal-box" id="modalBox">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ COMPARE TRAY ═══════════════ -->
+<div class="compare-tray hidden" id="compareTray">
+  <div class="tray-inner">
+    <span class="tray-label">🔄 Comparing:</span>
+    <div class="tray-items" id="trayItems"></div>
+    <button class="tray-btn" id="openCompare">Compare Now</button>
+    <button class="tray-clear" id="clearCompare">Clear</button>
+  </div>
+</div>
+
+<!-- ═══════════════ COMPARE PAGE ═══════════════ -->
+<div class="compare-page hidden" id="comparePage">
+  <div class="compare-header">
+    <button class="back-btn" id="backFromCompare">← Back</button>
+    <h2>🔄 Side-by-Side Comparison</h2>
+  </div>
+  <div id="compareContent"></div>
+</div>
+
+<!-- ═══════════════ TOAST ═══════════════ -->
+<div class="toast hidden" id="toast"></div>
+
+<footer class="footer">
+  <div style="display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto; flex-wrap:wrap; gap:20px;">
+    <div>
+      <h2 style="font-size:24px; font-weight:900; color:#000; letter-spacing:-1px;">COMPARE.IO</h2>
+      <p style="margin-top:8px;">The ultimate AI-powered product comparison engine.</p>
+    </div>
+    <div>
+      <a href="admin.html">Admin Panel</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Use</a>
+    </div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('evaluation-form');
+    const resultContent = document.getElementById('result-content');
+    const placeholder = document.getElementById('placeholder');
+    
+    // Result elements
+    const scoreRing = document.getElementById('score-ring');
+    const scoreNumber = document.getElementById('risk-score');
+    const riskStatus = document.getElementById('risk-status');
+    const riskReason = document.getElementById('risk-reason');
+    const otpSection = document.getElementById('otp-section');
+    const otpInput = document.getElementById('otp-input');
+    const deviceInput = document.getElementById('device');
+    const apiKeyInput = document.getElementById('apiKey');
+    
+    // Auto-detect basic device info for real-time tracking
+    function detectDevice() {
+        const ua = navigator.userAgent;
+        let os = "Unknown OS";
+        let browser = "Unknown Browser";
+        
+        if (ua.indexOf("Win") !== -1) os = "Windows";
+        else if (ua.indexOf("Mac") !== -1) os = "MacOS";
+        else if (ua.indexOf("Linux") !== -1) os = "Linux";
+        else if (ua.indexOf("Android") !== -1) os = "Android";
+        else if (ua.indexOf("like Mac") !== -1) os = "iOS";
+        
+        if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
+        else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+        else if (ua.indexOf("Safari") !== -1 && ua.indexOf("Chrome") === -1) browser = "Safari";
+        else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+        
+        // adding timezone
+        let tz = "Unknown TZ";
+        try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+        
+        return `${os} - ${browser} (${tz})`;
+    }
+    
+    let deviceData = "Tracking Details...";
+    if(deviceInput) {
+        deviceData = detectDevice();
+        deviceInput.value = deviceData;
+        deviceInput.style.color = '#94a3b8';
+        deviceInput.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        deviceInput.style.cursor = 'not-allowed';
+    }
+    
+    // Reset ring initially
+    scoreRing.style.strokeDasharray = `0, 100`;
+
+    verifyOtpBtn.addEventListener('click', async () => {
+        const otp = otpInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+        otpMsg.classList.remove('hidden');
+        
+        if (otp.length === 6 && !isNaN(otp)) {
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.textContent = 'Verifying...';
+            
+            try {
+                // Real backend API call to verify the entered OTP
+                const response = await fetch('/api/verify_otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-API-KEY': apiKey },
+                    body: JSON.stringify({ otp: otp })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    otpMsg.textContent = 'OTP Verified! Access Granted.';
+                    otpMsg.className = 'otp-success';
+                    verifyOtpBtn.textContent = 'Verified ✔';
+                } else {
+                    otpMsg.textContent = result.message || 'Invalid or expired OTP.';
+                    otpMsg.className = 'otp-error';
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.textContent = 'Verify';
+                }
+            } catch (err) {
+                console.error('OTP Verification Error:', err);
+                otpMsg.textContent = 'Server error during verification.';
+                otpMsg.className = 'otp-error';
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.textContent = 'Verify';
+            }
+        } else {
+            otpMsg.textContent = 'Please enter a valid 6-digit number.';
+            otpMsg.className = 'otp-error';
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Grab inputs
+        const attempts = document.getElementById('attempts').value;
+        const location = document.getElementById('location').value;
+        const time = document.getElementById('time').value;
+        const apiKey = apiKeyInput.value.trim();
+        
+        if(!apiKey) {
+            alert("Error: API Subscription Key is required!");
+            return;
+        }
+
+        // Show loading state on button
+        const btn = form.querySelector('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>Evaluating...</span>';
+        btn.disabled = true;
+        
+        // Reset dynamic sections
+        otpSection.classList.add('hidden');
+        fraudOverlay.classList.add('hidden');
+        otpMsg.classList.add('hidden');
+        otpInput.value = '';
+        verifyOtpBtn.disabled = false;
+        verifyOtpBtn.textContent = 'Verify';
+
+        try {
+            const response = await fetch('/api/evaluate_risk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': apiKey
+                },
+                body: JSON.stringify({
+                    attempts: attempts,
+                    location: location,
+                    time: time,
+                    device: deviceData
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                // Format the error message directly into the UI status box
+                placeholder.classList.add('hidden');
+                resultContent.classList.remove('hidden');
+                resultContent.style.visibility = 'visible';
+                
+                statusBox.className = 'status-box status-high';
+                riskStatus.textContent = "BLOCKED";
+                riskReason.textContent = data.message || data.error;
+                scoreRing.style.strokeDasharray = `0, 100`;
+                scoreNumber.textContent = "0";
+                return;
+            }
+            
+            // Switch view
+            placeholder.classList.add('hidden');
+            resultContent.classList.remove('hidden');
+            resultContent.style.visibility = 'visible';
+            resultContent.style.position = 'relative';
+            
+            // Remove previous status classes
+            statusBox.className = 'status-box';
+            
+            // Apply new data
+            animateScore(data['Risk Score']);
+            riskStatus.textContent = data['Status'];
+            riskReason.textContent = data['Reason'];
+            
+            // Apply color mode and trigger subsequent actions based on risk
+            const animationDuration = 1500;
+            
+            if (data['Status'] === 'LOW') {
+                statusBox.classList.add('status-low');
+            } else if (data['Status'] === 'MEDIUM') {
+                statusBox.classList.add('status-medium');
+                
+                // Real OTP Flow: Make an API call to backend to generate/send the OTP
+                setTimeout(async () => {
+                    try {
+                        const otpResponse = await fetch('/api/send_otp', { 
+                            method: 'POST',
+                            headers: { 'X-API-KEY': apiKey }
+                        });
+                        if (otpResponse.ok) {
+                            otpSection.classList.remove('hidden');
+                        } else {
+                            const errData = await otpResponse.json();
+                            alert("Failed to send validation OTP: " + (errData.message || ''));
+                        }
+                    } catch (err) {
+                        console.error("OTP send error:", err);
+                        alert("Network error: Could not reach OTP service.");
+                    }
+                }, animationDuration + 100);
+            } else {
+                statusBox.classList.add('status-high');
+                // Trigger Fraud Overlay and lock down application after animation
+                setTimeout(() => {
+                    fraudOverlay.classList.remove('hidden');
+                }, animationDuration + 100);
+            }
+
+        } catch (error) {
+            console.error('Error fetching risk assessment:', error);
+            alert("Failed to reach the assessment engine. Make sure the server is running.");
+        } finally {
+            // Restore button
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+    
+    function animateScore(targetScore) {
+        // Animate circular ring
+        scoreRing.style.strokeDasharray = `${targetScore}, 100`;
+        
+        // Animate numbers counting up
+        let current = 0;
+        const duration = 1500; // ms
+        const interval = 20; // ms
+        const steps = duration / interval;
+        const increment = targetScore / steps;
+        
+        const counter = setInterval(() => {
+            current += increment;
+            if (current >= targetScore) {
+                current = targetScore;
+                clearInterval(counter);
+            }
+            scoreNumber.textContent = Math.round(current);
+        }, interval);
+    }
+});
